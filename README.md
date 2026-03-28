@@ -48,7 +48,7 @@ python music_overlay.py "C:\Users\you\Music"
 
 ## Download (Windows .exe) [RECOMMENDED]
 
-Grab the latest release from the [Releases](../../releases) page — no Python required.
+Grab the latest release from the [Releases](../../releases) page, no Python required.
 
 Unzip the folder, run `KalanarisPlayer.exe`. Your playlists and settings are saved in a `KalanarisPlayer/` folder next to the exe.
 
@@ -101,4 +101,4 @@ All hotkeys are configurable in ⚙ Settings.
 
 ## License
 
-MIT — do whatever you want with it. Credit is nice but not required.
+MIT, so do whatever you want with it. Credit is nice but not required.
