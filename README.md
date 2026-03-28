@@ -24,6 +24,14 @@ A Touhou-inspired desktop music player with a slide-in "Now Playing" overlay, bu
 
 ---
 
+## Download (Windows .exe) [RECOMMENDED]
+
+Grab the latest release from the [Releases](../../releases) page, no Python required.
+
+Unzip the folder, run `KalanarisPlayer.exe`. Your playlists and settings are saved in a `KalanarisPlayer/` folder next to the exe.
+
+---
+
 ## Running from source
 
 ### Requirements
@@ -43,14 +51,6 @@ Or pass a folder directly:
 ```bash
 python music_overlay.py "C:\Users\you\Music"
 ```
-
----
-
-## Download (Windows .exe) [RECOMMENDED]
-
-Grab the latest release from the [Releases](../../releases) page, no Python required.
-
-Unzip the folder, run `KalanarisPlayer.exe`. Your playlists and settings are saved in a `KalanarisPlayer/` folder next to the exe.
 
 ---
 
