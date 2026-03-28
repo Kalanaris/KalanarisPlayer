@@ -2516,27 +2516,36 @@ class ControlPanel:
 
     def _poll_progress(self):
         # Runs every 150ms to update the progress bar and timestamp.
-        # 150ms is a good balance, fast enough to look smooth,
-        # slow enough not to murder the CPU. (We already have a 60fps draw loop.
-        # We don't need to be greedy.)
-        # Note: we check `playing OR paused` because on_song_change fires just
-        # before playing=True is set, so the first poll would see playing=False
-        # and leave the bar stuck at 0:00. This drove me insane for two sessions.
+        #
+        # THE 0:00 BUG HISTORY (now fixed properly):
+        #   v1: checked `player.playing` only → failed because on_song_change
+        #       fires just before playing=True is set. Bar stuck at 0:00.
+        #   v2: added `or player.paused` → still failed for songs where
+        #       mutagen couldn't read duration (duration=0). The condition
+        #       `song.duration > 0` silently killed the whole poll.
+        #       Songs played fine, bar showed 0:00 forever. Infuriating.
+        #   v3 (current): always poll when there's a song and player is active.
+        #       Use duration only for clamping and slider range, never as a gate.
+        #       Like checking if Monado Arts are charged — you check the state,
+        #       not whether you've unlocked the skill yet.
         if not self._seeking:
             song = self.player.current_song()
-            # Check playing OR pausedthe on_song_change callback fires
-            # just before playing=True is set, so the first poll(s) would
-            # see playing=False and leave the bar stuck at 0:00 forever.
-            # Checking both states means we always update when there's a song.
-            if song and song.duration > 0 and (self.player.playing or self.player.paused):
-                pos = min(self.player.get_position(), song.duration)
+            if song and (self.player.playing or self.player.paused):
+                pos = self.player.get_position()
+                # Clamp to duration only if we actually know it
+                if song.duration > 0:
+                    pos = min(pos, song.duration)
+                    self.prog_slider.config(to=song.duration)
+                    self.len_var.set(song.fmt_duration())
+                else:
+                    # Duration unknown — show an open-ended bar
+                    self.prog_slider.config(to=max(pos + 30, 60))
+                    self.len_var.set('?:??'  )
                 self._prog_updating = True
                 self.prog_var.set(pos)
                 self._prog_updating = False
                 self.pos_var.set(song.fmt_pos(pos))
-                self.len_var.set(song.fmt_duration())
-                self.prog_slider.config(to=song.duration)
-        self.root.after(150, self._poll_progress)   # 150ms for smooth bar
+        self.root.after(150, self._poll_progress)   # 150ms is the sweet spot
 
     def _on_prog_drag(self, _):
         if self._prog_updating: return
