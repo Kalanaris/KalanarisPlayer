@@ -1,0 +1,15 @@
+# Personal data — don't commit these
+KalanarisPlayer/
+*.json
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+
+# Editor stuff
+.vscode/
+.idea/
+*.swp
