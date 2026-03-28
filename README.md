@@ -46,7 +46,7 @@ python music_overlay.py "C:\Users\you\Music"
 
 ---
 
-## Download (Windows .exe)
+## Download (Windows .exe) [RECOMMENDED]
 
 Grab the latest release from the [Releases](../../releases) page — no Python required.
 
