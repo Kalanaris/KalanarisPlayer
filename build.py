@@ -9,17 +9,17 @@ Run with:
 Output will be in:
     dist/KalanarisPlayer/KalanarisPlayer.exe
 
-Everything the app needs is bundled — no Python installation required
+Everything the app needs is bundled, no Python installation required
 on the target machine (as long as the Visual C++ redistributable is present,
 which it almost certainly is on any modern Windows install).
 
 Notes:
 - First run installs PyInstaller automatically if it isn't present.
-- The build takes 30–90 seconds. This is normal. Grab a coffee.
+- The build takes 30–90 seconds.
 - The output folder is about 60–80 MB. Also normal. PyInstaller bundles Python itself.
 - If your antivirus flags the .exe, that's a false positive. PyInstaller exes
   trip heuristics because they unpack themselves on launch. Add an exclusion.
-  (Yes, this is an extremely 2010 problem. No, it hasn't been fixed.)
+  (Yes, this is annoying I LOVE WINDOWS)
 """
 
 import subprocess
