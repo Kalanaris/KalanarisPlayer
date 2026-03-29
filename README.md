@@ -14,7 +14,7 @@ A Touhou-inspired desktop music player with a slide-in "Now Playing" overlay, bu
 - **Album art** — shown in both the overlay and the main player card
 - **24 themes** — 12 standard themes plus 12 special animated themes: Persona 4 Golden, Persona 3, Persona 5, NieR, Evangelion, Xenoblade 2, Windows Aero, Lo-Fi, Touhou Imperishable Night, Bloodborne, Chrono Trigger, Ultrakill
 - **Animated overlays** — special themes have unique live animations: orbiting danmaku bullets, rotating Aegis star, Dark Hour clock hands, NERV scan lines, floating bubbles, falling rain, blood drips, spinning time gate, and more
-- **Animated card decorations** — the now-playing card shows theme-specific animated details: kill counter, scan percentage, clock face, NERV/MAGI alternating label, moon phases, etc.
+- **Animated card decorations** — the now-playing card shows theme-specific animated details: kill counter, scan percentage, clock face, NERV/MAGI label, moon phases, etc.
 - **Playlists** — create, rename, reorder, and load playlists from your library
 - **Favourites** — right-click any song to favourite it; filter the queue to favourites only with one click
 - **Global hotkeys** — control playback from inside any game (fully configurable)
@@ -24,7 +24,7 @@ A Touhou-inspired desktop music player with a slide-in "Now Playing" overlay, bu
 - **Drag to reorder** — rearrange songs in the queue by dragging
 - **Recent folders** — quickly reopen your last 8 music folders
 - **Volume normalization** — ReplayGain tag support to even out loud and quiet songs (toggle in Settings)
-- **Discord Rich Presence** — shows current song in your Discord status (optional, see below)
+- **Discord Rich Presence** — shows current song in your Discord status automatically
 - **OBS integration** — window capture with chroma key support
 - **Formats** — MP3, FLAC, OGG, WAV, M4A, AAC, Opus, WMA, APE, WavPack, TTA, MP2, MIDI
 
@@ -68,6 +68,8 @@ python music_overlay.py "C:\Users\you\Music"
 
 ## Building the exe yourself
 
+Place `build.py`, `music_overlay.py`, and `icon.ico` in the same folder, then run:
+
 ```bash
 pip install pyinstaller
 python build.py
@@ -103,7 +105,11 @@ All hotkeys are configurable in ⚙ Settings.
 
 ## Discord Rich Presence
 
-Install `pypresence`, create an application at [discord.com/developers](https://discord.com/developers/applications), and replace the `DISCORD_APP_ID` value near the top of `music_overlay.py` with your App ID. The current song will automatically appear in your Discord status.
+Install `pypresence` and the current song will automatically show in your Discord status. No configuration needed — the App ID is already set.
+
+```
+pip install pypresence
+```
 
 ---
 
