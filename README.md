@@ -32,7 +32,7 @@ A Touhou-inspired desktop music player with a slide-in "Now Playing" overlay, bu
 
 ## Download (Windows .exe) — Recommended
 
-Grab the latest release from the [Releases](../../releases) page — no Python required.
+Grab the latest release from the [Releases](../../releases) page, no Python required.
 
 Unzip the folder, run `KalanarisPlayer.exe`. Your playlists, settings, and favourites are saved next to the exe.
 
@@ -105,7 +105,7 @@ All hotkeys are configurable in ⚙ Settings.
 
 ## Discord Rich Presence
 
-Install `pypresence` and the current song will automatically show in your Discord status. No configuration needed — the App ID is already set.
+Install `pypresence` and the current song will automatically show in your Discord status.
 
 ```
 pip install pypresence
@@ -126,4 +126,4 @@ pip install pypresence
 
 ## License
 
-MIT — do whatever you want with it. Credit is nice but not required.
+MIT, so do whatever you want with it. Credit is nice but not required.
