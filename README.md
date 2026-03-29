@@ -10,25 +10,31 @@ A Touhou-inspired desktop music player with a slide-in "Now Playing" overlay, bu
 
 ## Features
 
-- **Slide-in overlay** — Touhou Mountain of Faith-style popup in any corner of your screen
+- **Slide-in overlay** — Touhou Mountain of Faith-style popup in any corner of your screen, with animated theme-specific decorations
 - **Album art** — shown in both the overlay and the main player card
-- **12 themes** — Touhou Gold, Midnight, Sakura, Forest, Crimson, Void, Amber, Ocean, Neon, Sunset, Ice, Lavender
+- **24 themes** — 12 standard themes plus 12 special animated themes: Persona 4 Golden, Persona 3, Persona 5, NieR, Evangelion, Xenoblade 2, Windows Aero, Lo-Fi, Touhou Imperishable Night, Bloodborne, Chrono Trigger, Ultrakill
+- **Animated overlays** — special themes have unique live animations: orbiting danmaku bullets, rotating Aegis star, Dark Hour clock hands, NERV scan lines, floating bubbles, falling rain, blood drips, spinning time gate, and more
+- **Animated card decorations** — the now-playing card shows theme-specific animated details: kill counter, scan percentage, clock face, NERV/MAGI alternating label, moon phases, etc.
 - **Playlists** — create, rename, reorder, and load playlists from your library
-- **Global hotkeys** — control playback from inside any game (configurable)
+- **Favourites** — right-click any song to favourite it; filter the queue to favourites only with one click
+- **Global hotkeys** — control playback from inside any game (fully configurable)
 - **System tray** — minimizes to tray, stays out of your taskbar
 - **Queue search** — filter your queue by title or artist
+- **Keyboard navigation** — arrow keys to browse the queue, Enter to play, Space to pause
 - **Drag to reorder** — rearrange songs in the queue by dragging
 - **Recent folders** — quickly reopen your last 8 music folders
+- **Volume normalization** — ReplayGain tag support to even out loud and quiet songs (toggle in Settings)
+- **Discord Rich Presence** — shows current song in your Discord status (optional, see below)
 - **OBS integration** — window capture with chroma key support
-- **Formats** — MP3, FLAC, OGG, WAV, M4A, AAC
+- **Formats** — MP3, FLAC, OGG, WAV, M4A, AAC, Opus, WMA, APE, WavPack, TTA, MP2, MIDI
 
 ---
 
-## Download (Windows .exe) [RECOMMENDED]
+## Download (Windows .exe) — Recommended
 
-Grab the latest release from the [Releases](../../releases) page, no Python required.
+Grab the latest release from the [Releases](../../releases) page — no Python required.
 
-Unzip the folder, run `KalanarisPlayer.exe`. Your playlists and settings are saved in a `KalanarisPlayer/` folder next to the exe.
+Unzip the folder, run `KalanarisPlayer.exe`. Your playlists, settings, and favourites are saved next to the exe.
 
 ---
 
@@ -38,6 +44,12 @@ Unzip the folder, run `KalanarisPlayer.exe`. Your playlists and settings are sav
 
 ```
 pip install pygame-ce mutagen pynput pillow pystray
+```
+
+Optional (for Discord Rich Presence):
+
+```
+pip install pypresence
 ```
 
 ### Run
@@ -89,16 +101,23 @@ All hotkeys are configurable in ⚙ Settings.
 
 ---
 
+## Discord Rich Presence
+
+Install `pypresence`, create an application at [discord.com/developers](https://discord.com/developers/applications), and replace the `DISCORD_APP_ID` value near the top of `music_overlay.py` with your App ID. The current song will automatically appear in your Discord status.
+
+---
+
 ## Data files
 
 | File | Location | Contents |
 |---|---|---|
-| `settings.json` | `KalanarisPlayer/` | Theme, volume, corner, etc. |
-| `playlists.json` | `KalanarisPlayer/` | Your saved playlists |
-| `hotkeys.json` | `KalanarisPlayer/` | Custom hotkey bindings |
+| `settings.json` | Next to the exe / script | Theme, volume, corner, etc. |
+| `playlists.json` | Next to the exe / script | Your saved playlists |
+| `hotkeys.json` | Next to the exe / script | Custom hotkey bindings |
+| `favourites.json` | Next to the exe / script | Your favourited songs |
 
 ---
 
 ## License
 
-MIT, so do whatever you want with it. Credit is nice but not required.
+MIT — do whatever you want with it. Credit is nice but not required.
