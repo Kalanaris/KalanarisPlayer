@@ -78,6 +78,46 @@ except Exception as e:
 
 HAS_MINIAUDIO = False   # not used; pygame-ce handles all formats
 
+# Discord Rich Presence — optional. pip install pypresence
+# Shows current song in Discord status. Silently skipped if not installed.
+HAS_DISCORD = False
+_discord_rpc  = None
+DISCORD_APP_ID = '1487773971125637190'  # Kalanaris' Music Player
+
+def _discord_connect():
+    global HAS_DISCORD, _discord_rpc
+    try:
+        from pypresence import Presence
+        _discord_rpc = Presence(DISCORD_APP_ID)
+        _discord_rpc.connect()
+        HAS_DISCORD = True
+    except Exception:
+        pass
+
+def _discord_update(title, artist, duration=None):
+    if not HAS_DISCORD or not _discord_rpc: return
+    try:
+        import time
+        kw = dict(
+            details=(title or 'Unknown')[:128],
+            state=(f'by {artist}' if artist else '')[:128],
+            large_image='music_note',
+            large_text="Kalanaris' Music Player",
+        )
+        if duration and duration > 0:
+            kw['end'] = int(time.time()) + int(duration)
+        _discord_rpc.update(**kw)
+    except Exception: pass
+
+def _discord_clear():
+    if HAS_DISCORD and _discord_rpc:
+        try: _discord_rpc.clear()
+        except Exception: pass
+
+import threading as _dth
+_dth.Thread(target=_discord_connect, daemon=True).start()
+
+
 # ── Tag / art reading ─────────────────────────────────────────────────────────
 # mutagen: reads your MP3 tags so the overlay shows "Prism" instead of
 # "02 - track02_final_FINAL_v3_USE THIS ONE.mp3"
@@ -133,7 +173,15 @@ PLAYLISTS_FILE = SCRIPT_DIR / 'playlists.json'
 HOTKEYS_FILE   = SCRIPT_DIR / 'hotkeys.json'
 SETTINGS_FILE  = SCRIPT_DIR / 'settings.json'
 
-AUDIO_EXTS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.aac'}
+AUDIO_EXTS = {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.aac', '.opus',   # OGG Opus — great quality at low bitrate, common in anime rips
+             '.wma',    # Windows Media Audio — still common on older Windows libraries
+             '.ape',    # Monkey's Audio — lossless, popular in some communities
+             '.wv',     # WavPack — lossless/lossy hybrid
+             '.tta',    # True Audio — lossless
+             '.mp2',    # MPEG Layer II — rare but pygame handles it
+             '.spx',    # Speex — voice codec
+             '.mid', '.midi',  # MIDI — pygame has native support
+             }
 
 
 # ─── Settings ─────────────────────────────────────────────────────────────────
@@ -317,6 +365,186 @@ THEMES = {
         'text':      '#f0eeff', 'text_dim':  '#8878aa', 'text_dim2': '#605878',
         'text_list': '#c0b0e0', 'separator': '#9070d0',
     },
+
+    # ── Persona 4 Golden ───────────────────────────────────────────────────────
+    # That iconic Atlus yellow. The black and gold. The Inaba fog.
+    # If you squint at the overlay, it looks like a Midnight Channel broadcast.
+    # Probably. I have not tested this in fog.
+    'Persona 4 Golden': {
+        'bg_deep':   '#090a14', 'bg_mid':    '#141625', 'bg_card':   '#111320',
+        'bg_btn':    '#1c1f33', 'bg_active': '#2a2d47', 'bg_list':   '#0d0f1c',
+        'ov_panel':  '#070810', 'ov_panel2': '#101224',
+        'accent':    '#f5c518', 'accent_hi': '#ffe033',
+        'text':      '#fff8e7', 'text_dim':  '#c8a820', 'text_dim2': '#8a7015',
+        'text_list': '#e8d080', 'separator': '#f5c518',
+    },
+
+    # ── Persona 3 ──────────────────────────────────────────────────────────────
+    # Dark navy, deep blue, electric cyan. The Dark Hour. Memento Mori.
+    # Tartarus ascends into the sky. The moon hangs low.
+    # Somewhere a clock strikes midnight and everything turns green-tinted black.
+    # (We do not have the budget for green-tinted black. Navy will have to do.)
+    'Persona 3': {
+        'bg_deep':   '#04060f', 'bg_mid':    '#080e20', 'bg_card':   '#060c1a',
+        'bg_btn':    '#0c1530', 'bg_active': '#142040', 'bg_list':   '#05080f',
+        'ov_panel':  '#030510', 'ov_panel2': '#080e22',
+        'accent':    '#1a6fd4', 'accent_hi': '#4db8ff',
+        'text':      '#e8f4ff', 'text_dim':  '#4a88cc', 'text_dim2': '#2a5088',
+        'text_list': '#90c8f0', 'separator': '#1a6fd4',
+    },
+
+    # ── Persona 5 ──────────────────────────────────────────────────────────────
+    # Red. Black. White. Stylish beyond all reason.
+    # Phantom Thieves aesthetic: jagged angles, high contrast, bold everything.
+    # If this theme doesn't make you want to steal someone's heart, I don't know
+    # what to tell you. You Are Sentenced To A Life Of Poor Taste.
+    'Persona 5': {
+        'bg_deep':   '#0a0000', 'bg_mid':    '#1a0000', 'bg_card':   '#140000',
+        'bg_btn':    '#220000', 'bg_active': '#3a0000', 'bg_list':   '#0e0000',
+        'ov_panel':  '#080000', 'ov_panel2': '#160000',
+        'accent':    '#cc0000', 'accent_hi': '#ff3333',
+        'text':      '#ffffff', 'text_dim':  '#cc4444', 'text_dim2': '#882222',
+        'text_list': '#ffaaaa', 'separator': '#cc0000',
+    },
+
+    # ── NieR ───────────────────────────────────────────────────────────────────
+    # This is fine. Everything is fine. YoRHa No. 2 Type B.
+    # The world is beautiful. Glory to mankind.
+    # (Please ignore the existential implications of the save screen.)
+    # Parchment, sepia, warm off-white — like an old document that knows too much.
+    # Minimal. Purposefully restrained. Very "android maintaining composure."
+    'NieR': {
+        'bg_deep':   '#1a1610', 'bg_mid':    '#2a2318', 'bg_card':   '#232018',
+        'bg_btn':    '#332c20', 'bg_active': '#4a4030', 'bg_list':   '#1e1a12',
+        'ov_panel':  '#0e0c08', 'ov_panel2': '#1e1a12',
+        'accent':    '#c8b888', 'accent_hi': '#e8d4a0',
+        'text':      '#ede0c0', 'text_dim':  '#a09060', 'text_dim2': '#706040',
+        'text_list': '#d0c090', 'separator': '#c8b888',
+    },
+
+    # ── Evangelion ─────────────────────────────────────────────────────────────
+    # MAGI SYSTEM ONLINE. PATTERN BLUE. SYNCHRONIZATION RATE: UNDEFINED.
+    # Green phosphor terminal. Amber warning. Black void.
+    # The kind of UI that was designed to look impressive in 1997 and still does.
+    # Do not look directly at Unit-01. Do not think about the Lance.
+    'Evangelion': {
+        # MAGI SYSTEM ONLINE. PATTERN BLUE. SYNCHRONIZATION RATE: UNDEFINED.
+        # Green phosphor terminal. Amber-orange warning accents. Black void.
+        'bg_deep':   '#010a04', 'bg_mid':    '#041408', 'bg_card':   '#031008',
+        'bg_btn':    '#061c0c', 'bg_active': '#0a2e14', 'bg_list':   '#020c04',
+        'ov_panel':  '#000802', 'ov_panel2': '#041008',
+        'accent':    '#00cc44', 'accent_hi': '#00ff66',
+        'text':      '#c8ffd0', 'text_dim':  '#44aa66', 'text_dim2': '#226644',
+        'text_list': '#88dd99', 'separator': '#00cc44',
+    },
+
+    # ── Xenoblade 2 ────────────────────────────────────────────────────────────
+    # Cloud Sea. Titans. Blades. Rex and Pyra going on an extremely long journey.
+    # The UI is clean, blue, optimistic — like a JRPG that hasn't broken your heart yet.
+    # (It will. Oh, it will. But not right now. Right now it's just clean blue panels.)
+    'Xenoblade 2': {
+        # The Cloud Sea at dawn. Bioluminescent. Vast and quiet.
+        # Deep teal-black backgrounds with glowing cyan and soft aqua accents.
+        # Less "clean JRPG UI", more "standing on a Titan watching the sea glow."
+        'bg_deep':   '#010810', 'bg_mid':    '#021420', 'bg_card':   '#011018',
+        'bg_btn':    '#042030', 'bg_active': '#083858', 'bg_list':   '#010c14',
+        'ov_panel':  '#010610', 'ov_panel2': '#031020',
+        'accent':    '#00c8d4', 'accent_hi': '#80f0ff',
+        'text':      '#e0faff', 'text_dim':  '#3a9aaa', 'text_dim2': '#1a5a66',
+        'text_list': '#70dde8', 'separator': '#00c8d4',
+    },
+
+    # ── Windows Aero ───────────────────────────────────────────────────────────
+    # Vista. 2007. Frosted glass taskbar. The sidebar gadgets. The startup sound.
+    # You could see through your windows. It was peak UI.
+    # We do not have actual transparency here. We have the FEELING of transparency.
+    # That has to be enough. Mourn with me.
+    'Windows Aero': {
+        # Fruitigo Aero. Mac OS X Cheetah. The iMac G3 in Bondi Blue.
+        # Warm charcoal base, NOT cold blue — the warmth of translucent plastic.
+        # Accent is that signature Apple Aqua teal-green, not Vista steel blue.
+        # The scrollbar has a little light on it. The button is a gel pill.
+        # Everything glows slightly. It is 2001 and things are about to be fine.
+        'bg_deep':   '#141410', 'bg_mid':    '#242420', 'bg_card':   '#1e1e1a',
+        'bg_btn':    '#323230', 'bg_active': '#484844', 'bg_list':   '#1a1a16',
+        'ov_panel':  '#0e0e0c', 'ov_panel2': '#1a1a16',
+        'accent':    '#44b8a0', 'accent_hi': '#80e8d0',
+        'text':      '#f4f4f0', 'text_dim':  '#909088', 'text_dim2': '#606058',
+        'text_list': '#d0d0c8', 'separator': '#44b8a0',
+    },
+
+    # ── Lo-Fi ─────────────────────────────────────────────────────────────────
+    # 2am. Rain on the window. A cup of tea going cold.
+    # The YouTube stream that never ends. Study beats.
+    # Rich purple, violet, neon mauve. Not dusty — saturated and dreamy.
+    # The vibe is: headphones on, city lights through the rain, don't talk to me.
+    'Lo-Fi': {
+        'bg_deep':   '#0c0818', 'bg_mid':    '#160e28', 'bg_card':   '#110a20',
+        'bg_btn':    '#201540', 'bg_active': '#342060', 'bg_list':   '#0e0a1c',
+        'ov_panel':  '#080510', 'ov_panel2': '#120a22',
+        'accent':    '#b060e8', 'accent_hi': '#e080ff',
+        'text':      '#f0e0ff', 'text_dim':  '#9060c0', 'text_dim2': '#604888',
+        'text_list': '#d0a0f8', 'separator': '#b060e8',
+    },
+
+    # ── Touhou: Imperishable Night ─────────────────────────────────────────────
+    # The night that won\'t end. Moonlit bamboo forest. Keine and Mokou.
+    # A completely different feel from Mountain of Faith\'s warm gold.
+    # Deep midnight blue, cold silver, pale lavender. Eirin\'s laboratory at 3am.
+    'Imperishable Night': {
+        'bg_deep':   '#04040e', 'bg_mid':    '#080818', 'bg_card':   '#060614',
+        'bg_btn':    '#0e0e24', 'bg_active': '#181836', 'bg_list':   '#050510',
+        'ov_panel':  '#030308', 'ov_panel2': '#070712',
+        'accent':    '#7878c8', 'accent_hi': '#c0c0ff',
+        'text':      '#e8e8ff', 'text_dim':  '#8888bb', 'text_dim2': '#505080',
+        'text_list': '#c0c0e8', 'separator': '#7878c8',
+    },
+
+    # ── Bloodborne ─────────────────────────────────────────────────────────────
+    # Yharnam. The Hunt. Old Blood and madness and cobblestones slick with rain.
+    # This isn't a clean gothic horror palette. It's a WRONG one.
+    # Sickly dark greens bleeding into black. Arterial red as accent.
+    # The kind of colours that feel like something has gone very wrong.
+    # The kind of colours that are wrong in a way you can't quite place.
+    # You hear a bell. You shouldn't be here. You go deeper anyway.
+    'Bloodborne': {
+        'bg_deep':   '#050804', 'bg_mid':    '#0e1208', 'bg_card':   '#0a0e06',
+        'bg_btn':    '#161c0e', 'bg_active': '#242e18', 'bg_list':   '#080a05',
+        'ov_panel':  '#030504', 'ov_panel2': '#0c100a',
+        'accent':    '#8b1a1a', 'accent_hi': '#cc3020',
+        'text':      '#d8c8a0', 'text_dim':  '#708060', 'text_dim2': '#485038',
+        'text_list': '#b0a878', 'separator': '#8b1a1a',
+    },
+
+    # ── Chrono Trigger ─────────────────────────────────────────────────────────
+    # Time. The swirling blue-white of the Epoch at full speed.
+    # Lighter than you expect — the palette of hope and adventure, not doom.
+    # The Millennial Fair. Soft sky blue, gold sunlight, warm cream.
+    # Things are okay here. They might not stay okay. But right now they are.
+    'Chrono Trigger': {
+        'bg_deep':   '#0c1830', 'bg_mid':    '#162840', 'bg_card':   '#102038',
+        'bg_btn':    '#1e3454', 'bg_active': '#2c4870', 'bg_list':   '#0e1c38',
+        'ov_panel':  '#081020', 'ov_panel2': '#101c34',
+        'accent':    '#e8c040', 'accent_hi': '#fff080',
+        'text':      '#e8f4ff', 'text_dim':  '#7098c0', 'text_dim2': '#406888',
+        'text_list': '#b8d8f8', 'separator': '#e8c040',
+    },
+
+    # ── Ultrakill ──────────────────────────────────────────────────────────────
+    # MANKIND IS DEAD. BLOOD IS FUEL. HELL IS FULL.
+    # V1, a machine that kills for blood to survive, descends through Hell.
+    # Pure black. Brutal red. White-hot muzzle flash. No mercy. No survivors.
+    # The UI is stark and aggressive — thick red bars, white numbers, black void.
+    # If you are not moving you are dying. The music GOES.
+    'Ultrakill': {
+        'bg_deep':   '#060000', 'bg_mid':    '#0e0000', 'bg_card':   '#0a0000',
+        'bg_btn':    '#180000', 'bg_active': '#2a0000', 'bg_list':   '#080000',
+        'ov_panel':  '#040000', 'ov_panel2': '#0c0000',
+        'accent':    '#dd0000', 'accent_hi': '#ffffff',
+        'text':      '#ffffff', 'text_dim':  '#aa2020', 'text_dim2': '#661010',
+        'text_list': '#ffaaaa', 'separator': '#dd0000',
+    },
+
 }
 
 # Active theme palette — mutable dict, updated by apply_theme()
@@ -483,6 +711,7 @@ class Song:
         self.album    = ''
         self.duration = 0.0
         self.art_data = None   # raw bytes of embedded album art
+        self.gain_db  = 0.0    # ReplayGain track gain in dB (0 = no adjustment)
 
         if HAS_MUTAGEN:
             self._load_tags()
@@ -508,6 +737,14 @@ class Song:
                         self.art_data = tags[key].data; break
                 try: self.duration = MP3(self.path).info.length
                 except Exception: pass
+                # ReplayGain — stored as TXXX:replaygain_track_gain in ID3
+                for key in tags.keys():
+                    if 'replaygain_track_gain' in key.lower():
+                        try:
+                            val = str(tags[key])
+                            self.gain_db = float(val.replace('dB','').replace('dB','').strip())
+                        except Exception: pass
+                        break
 
             elif ext == '.flac':
                 audio = FLAC(self.path)
@@ -519,6 +756,10 @@ class Song:
                     self.art_data = audio.pictures[0].data
                 try: self.duration = audio.info.length
                 except Exception: pass
+                rg = audio.get('replaygain_track_gain')
+                if rg:
+                    try: self.gain_db = float(str(rg[0]).replace('dB','').strip())
+                    except Exception: pass
 
             elif ext in ('.ogg', '.opus'):
                 audio = OggVorbis(self.path)
@@ -547,6 +788,55 @@ class Song:
 
             elif ext == '.wav':
                 try:
+                    af = mutagen.File(self.path)
+                    if af and af.info: self.duration = af.info.length
+                except Exception: pass
+
+            elif ext == '.opus':
+                try:
+                    from mutagen.oggopus import OggOpus
+                    audio = OggOpus(self.path)
+                    t  = audio.get('title');  a = audio.get('artist'); al = audio.get('album')
+                    if t:  self.title  = t[0]
+                    if a:  self.artist = a[0]
+                    if al: self.album  = al[0]
+                    if audio.info: self.duration = audio.info.length
+                except Exception: pass
+
+            elif ext == '.wma':
+                try:
+                    from mutagen.asf import ASF
+                    audio = ASF(self.path)
+                    t  = audio.get('Title');  a = audio.get('Author'); al = audio.get('WM/AlbumTitle')
+                    if t:  self.title  = str(t[0])
+                    if a:  self.artist = str(a[0])
+                    if al: self.album  = str(al[0])
+                    if audio.info: self.duration = audio.info.length
+                    # WMA album art
+                    pics = audio.get('WM/Picture')
+                    if pics:
+                        try: self.art_data = pics[0].value
+                        except Exception: pass
+                except Exception: pass
+
+            elif ext in ('.ape', '.wv', '.tta', '.mp2', '.spx'):
+                # Generic fallback — mutagen.File handles most of these
+                try:
+                    af = mutagen.File(self.path)
+                    if af:
+                        t  = af.get('title') or af.get('Title')
+                        a  = af.get('artist') or af.get('Author')
+                        al = af.get('album') or af.get('Album')
+                        if t:  self.title  = t[0] if isinstance(t, list) else str(t)
+                        if a:  self.artist = a[0] if isinstance(a, list) else str(a)
+                        if al: self.album  = al[0] if isinstance(al, list) else str(al)
+                        if af.info: self.duration = af.info.length
+                except Exception: pass
+
+            elif ext in ('.mid', '.midi'):
+                # MIDI has no tags — just use the filename
+                try:
+                    import mutagen.mid
                     af = mutagen.File(self.path)
                     if af and af.info: self.duration = af.info.length
                 except Exception: pass
@@ -590,6 +880,40 @@ def find_audio_files(folder):
 # No database, Just a JSON file.
 # If you delete it, your playlists are gone. Back it up. I'm not your dad.
 # (But seriously, back it up. I've lost a playlist it was really annoying I had ALOT there)
+class FavouriteStore:
+    """Persists favourite song paths. Stored as a JSON list next to playlists."""
+    def __init__(self, data_dir):
+        self._path = Path(data_dir) / 'favourites.json'
+        self._favs: set = set()
+        self._load()
+
+    def _load(self):
+        try:
+            if self._path.exists():
+                self._favs = set(json.load(open(self._path, encoding='utf-8')))
+        except Exception:
+            self._favs = set()
+
+    def save(self):
+        try:
+            json.dump(list(self._favs),
+                open(self._path, 'w', encoding='utf-8'), indent=2)
+        except Exception:
+            pass
+
+    def toggle(self, path: str) -> bool:
+        """Toggle. Returns True if now a favourite."""
+        if path in self._favs:
+            self._favs.discard(path)
+        else:
+            self._favs.add(path)
+        self.save()
+        return path in self._favs
+
+    def is_fav(self, path: str) -> bool:
+        return path in self._favs
+
+
 class PlaylistStore:
     def __init__(self):
         self._data = {}
@@ -907,6 +1231,442 @@ class NowPlayingOverlay:
         c.create_rectangle(x+2, y+2, x+art_zone_w+2, y+h-2,
             fill=PANEL_BG2, outline='', tags=tag)
 
+        # ── Persona 4 / 5 / 3: Themed overlay decorations ────────────────────
+        if ACTIVE_THEME_NAME in ('Persona 4 Golden', 'Persona 5', 'Persona 3', 'NieR', 'Evangelion', 'Xenoblade 2', 'Windows Aero', 'Lo-Fi', 'Imperishable Night', 'Bloodborne', 'Chrono Trigger', 'Ultrakill'):
+            # Shared flower helper (P4 only)
+            def _flower(cx, cy, r=8, petal_r=5, col='#f5c518', col2='#fff8e0'):
+                for i in range(5):
+                    ang = math.pi * 2 * i / 5 - math.pi / 2
+                    px = cx + int(r * math.cos(ang))
+                    py = cy + int(r * math.sin(ang))
+                    c.create_oval(px-petal_r, py-petal_r, px+petal_r, py+petal_r,
+                                  fill=col, outline='#000000', width=1, tags=tag)
+                c.create_oval(cx-4, cy-4, cx+4, cy+4, fill=col2, outline='', tags=tag)
+
+        if ACTIVE_THEME_NAME == 'Persona 4 Golden':
+            # ── Diagonal stripes — properly clipped to panel bounds ──
+            # We draw each stripe as a filled polygon with Canvas clip via
+            # a clipping rectangle drawn transparently first.
+            # Stripe cycle: wide yellow, narrow cream, gap
+            stripe_cycle = [(20, '#f5c518'), (6, '#fffbe8'), (28, None)]
+            off = x - h
+            while off < x + w:
+                for sw, sc in stripe_cycle:
+                    if sc is not None:
+                        # Clamp polygon x coords to [x+2, x+w-2]
+                        ax1 = max(x+2, off)
+                        ax2 = min(x+w-2, off + sw)
+                        bx1 = max(x+2, off + h)
+                        bx2 = min(x+w-2, off + sw + h)
+                        if ax2 > ax1 or bx2 > bx1:
+                            # Build a trapezoid properly clipped
+                            pts = []
+                            # top edge
+                            if ax1 < x+w-2: pts += [ax1, y+2]
+                            if ax2 > x+2:   pts += [min(ax2, x+w-2), y+2]
+                            # bottom edge (reversed)
+                            if bx2 > x+2:   pts += [min(bx2, x+w-2), y+h-2]
+                            if bx1 < x+w-2: pts += [max(bx1, x+2), y+h-2]
+                            if len(pts) >= 6:
+                                c.create_polygon(pts, fill=sc, outline='',
+                                    stipple='gray50', tags=tag)
+                    off += sw
+
+            # Flowers pulse — Midnight Channel flicker
+            pulse = 1.0 + 0.2 * math.sin(t * 0.08)
+            pr6, pr4, pr3 = max(1,int(6*pulse)), max(1,int(4*pulse)), max(1,int(3*pulse))
+            _flower(x+w-16, y+h-14, r=9, petal_r=pr6, col='#f5c518', col2='#fff8e0')
+            _flower(x+w-28, y+12,   r=6, petal_r=pr4, col='#ffe033', col2='#ffffff')
+            _flower(x+w-14, y+10,   r=5, petal_r=pr3, col='#f5c518', col2='#fff8e0')
+            for dx, dy in [(x+w-38, y+18), (x+w-32, y+22), (x+w-6, y+h-22)]:
+                c.create_oval(dx-2, dy-2, dx+2, dy+2, fill='#f5c518', outline='', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Persona 5':
+            # ── P5: calling card — slash and bar pulse alternately ──
+            stip = 'gray50' if (t // 8) % 2 == 0 else 'gray25'
+            bar_stip = 'gray25' if (t // 8) % 2 == 0 else 'gray50'
+            slash_pts = [x+w-80,y+2, x+w-2,y+2, x+w-2,y+h-2, x+w-120,y+h-2]
+            c.create_polygon(slash_pts, fill='#cc0000', outline='', stipple=stip, tags=tag)
+            c.create_line(x+w-78, y+4, x+w-118, y+h-4, fill='#ffffff', width=2, tags=tag)
+            c.create_line(x+w-60, y+4, x+w-100, y+h-4,
+                fill='#ffffff', width=1, stipple='gray50', tags=tag)
+            c.create_rectangle(x+2, y+2, x+8, y+h-2,
+                fill='#cc0000', outline='', stipple=bar_stip, tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Persona 3':
+            # ── P3: circular Evoker/clock motif in corner ──
+            r_out, r_in = 18, 12
+            cx, cy = x+w-22, y+h//2
+            c.create_oval(cx-r_out, cy-r_out, cx+r_out, cy+r_out,
+                fill='#1a6fd4', outline='#4db8ff', width=1,
+                stipple='gray50', tags=tag)
+            c.create_oval(cx-r_in, cy-r_in, cx+r_in, cy+r_in,
+                fill='#030510', outline='', tags=tag)
+            for i in range(12):
+                ang = math.pi * 2 * i / 12 - math.pi / 2
+                ix = cx + int(r_in * math.cos(ang))
+                iy = cy + int(r_in * math.sin(ang))
+                ox = cx + int(r_out * math.cos(ang))
+                oy = cy + int(r_out * math.sin(ang))
+                c.create_line(ix, iy, ox, oy, fill='#4db8ff', width=1, tags=tag)
+            c.create_oval(cx-3, cy-3, cx+3, cy+3, fill='#4db8ff', outline='', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'NieR':
+            # ── NieR: YoRHa tactical data borders ──
+            # Corner brackets — like the android HUD info boxes in the game.
+            # Simple, minimal, elegant. 2B would approve.
+            blen = 12  # bracket arm length
+            bw   = 2
+            col  = '#c8b888'
+            col2 = '#e8d4a0'
+            # Four corners of the panel, L-shaped brackets
+            for bx, by, sx, sy in [
+                (x+3,   y+4,   1,  1),   # top-left
+                (x+w-4, y+4,  -1,  1),   # top-right
+                (x+3,   y+h-4, 1, -1),   # bottom-left
+                (x+w-4, y+h-4,-1, -1),   # bottom-right
+            ]:
+                c.create_line(bx, by, bx+sx*blen, by,
+                    fill=col2, width=bw, tags=tag)
+                c.create_line(bx, by, bx, by+sy*blen,
+                    fill=col2, width=bw, tags=tag)
+            # Thin horizontal separator line — NieR loves a quiet divider
+            c.create_line(x+20, y+28, x+w-20, y+28,
+                fill=col, width=1, stipple='gray50', tags=tag)
+            # Small YoRHa-style data tag bottom-right
+            c.create_text(x+w-6, y+h-6, text='No.2',
+                fill=col, font=('Courier New', 6), anchor='se', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Evangelion':
+            # ── Evangelion: NERV Magi terminal grid overlay ──
+            # Primarily green phosphor — with orange/amber as warning accents.
+            # "Ritsuko staring at readings she doesn't want to explain."
+            grn  = '#00cc44'
+            amb  = '#ff9900'   # orange WARNING accent
+            dgrn = '#006622'
+            # Green phosphor grid lines
+            for gy in range(y+15, y+h-2, 12):
+                c.create_line(x+2, gy, x+w-2, gy,
+                    fill=dgrn, width=1, stipple='gray25', tags=tag)
+            for gx in range(x+20, x+w-2, 24):
+                c.create_line(gx, y+2, gx, y+h-2,
+                    fill=dgrn, width=1, stipple='gray25', tags=tag)
+            # Orange WARNING diamonds — more prominent than before
+            def _diamond_warn(cx, cy, r=8):
+                c.create_polygon(cx, cy-r, cx+r, cy, cx, cy+r, cx-r, cy,
+                    fill=amb, outline='#ffcc44', width=1, tags=tag)
+                c.create_text(cx, cy, text='!', fill='#000000',
+                    font=('Courier New', 7, 'bold'), tags=tag)
+            _diamond_warn(x+w-12, y+h//2)        # main warning
+            _diamond_warn(x+w-12, y+14, r=5)     # small secondary
+            # Orange top bar — slim NERV alert strip, just enough to be visible
+            c.create_rectangle(x+2, y+2, x+w-2, y+5,
+                fill=amb, outline='', tags=tag)
+            # MAGI in green
+            c.create_text(x+w-5, y+5, text='MAGI',
+                fill=grn, font=('Courier New', 7, 'bold'), anchor='ne', tags=tag)
+            # Green scan line
+            scan_y = y + 4 + ((t * 2) % (h - 8))
+            c.create_line(x+2, scan_y, x+w-2, scan_y,
+                fill=grn, width=1, stipple='gray50', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Xenoblade 2':
+            # ── Xenoblade 2: Cloud Sea / Aegis ethereal glow ──
+            # The Cloud Sea at night. Bioluminescent. Everything faintly glowing.
+            # Like standing on Gramps watching the world below breathe.
+            cyn  = '#00c8d4'   # main cyan
+            gcyn = '#80f0ff'   # bright glow cyan
+            dcyn = '#031828'   # dark ocean
+            # Glowing outer border — the whole panel rim glows softly
+            c.create_rectangle(x+2, y+2, x+w-2, y+h-2,
+                outline=cyn, width=1, fill='', tags=tag)
+            # Inner subtle glow lines at top and bottom
+            c.create_line(x+6, y+5, x+w-6, y+5,
+                fill=gcyn, width=1, stipple='gray50', tags=tag)
+            c.create_line(x+6, y+h-5, x+w-6, y+h-5,
+                fill=gcyn, width=1, stipple='gray50', tags=tag)
+            # Floating ripple circles — Cloud Sea bioluminescence
+            for rx, ry, rr in [(x+w-18, y+h//2, 12), (x+w-18, y+h//2, 7), (x+w-18, y+h//2, 3)]:
+                c.create_oval(rx-rr, ry-rr, rx+rr, ry+rr,
+                    outline=cyn, width=1, fill='', stipple='gray50', tags=tag)
+            # Aegis six-pointed star hint (two triangles)
+            import math as _m
+            scx, scy, sr = x+w-18, y+h//2, 6
+            for angle_off in (0, math.pi/3):
+                pts = []
+                for i in range(3):
+                    a = angle_off + math.pi*2*i/3 - math.pi/2
+                    pts += [scx + int(sr*math.cos(a)), scy + int(sr*math.sin(a))]
+                c.create_polygon(pts, outline=gcyn, fill='', width=1, tags=tag)
+            # Soft particle dots scattered like floating sea organisms
+            rng2 = random.Random(42)  # fixed seed — always same pattern
+            for _ in range(8):
+                px = x + 8 + rng2.randint(0, w-40)
+                py = y + 8 + rng2.randint(0, h-16)
+                c.create_oval(px-1, py-1, px+2, py+2,
+                    fill=cyn, outline='', stipple='gray50', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Windows Aero':
+            # ── Windows Aero: Fruitigo Aqua gel glass ──
+            # iMac G3. Mac OS X Cheetah. The gel pill buttons. The stripe.
+            # Warm charcoal base, teal-green Aqua accent, chrome pinstripes.
+            # "Welcome to Macintosh." The happy Mac. 2001. Everything was fine.
+            teal   = '#44b8a0'
+            lteal  = '#80e8d0'
+            white  = '#ffffff'
+            chrome = '#909088'
+            # Top glass sheen — strong white, warm not cold
+            c.create_rectangle(x+2, y+2, x+w-2, y+20,
+                fill=white, outline='', stipple='gray12', tags=tag)
+            c.create_rectangle(x+2, y+2, x+w-2, y+7,
+                fill=white, outline='', stipple='gray25', tags=tag)
+            # Chrome pinstripes — every Aqua surface had these
+            for ly in range(y+24, y+h-6, 3):
+                c.create_line(x+2, ly, x+w-2, ly,
+                    fill=chrome, width=1, stipple='gray12', tags=tag)
+            # Teal bottom reflection — the Aqua bottom glow
+            c.create_rectangle(x+2, y+h-8, x+w-2, y+h-2,
+                fill=teal, outline='', stipple='gray25', tags=tag)
+            # Aqua teal border
+            c.create_rectangle(x+1, y+1, x+w-1, y+h-1,
+                outline=teal, width=1, fill='', stipple='gray75', tags=tag)
+            # Gel pill buttons — the signature Aqua element, top corners
+            for cx2, cy2 in [(x+10, y+7), (x+w-10, y+7)]:
+                c.create_oval(cx2-7, cy2-4, cx2+7, cy2+4,
+                    fill=teal, outline='', stipple='gray50', tags=tag)
+                c.create_oval(cx2-5, cy2-3, cx2+5, cy2-1,
+                    fill=white, outline='', stipple='gray50', tags=tag)
+            # Stripe on the right — the OS X window control stripe
+            for sx in range(x+w-8, x+w-4, 2):
+                c.create_line(sx, y+2, sx, y+h-2,
+                    fill=lteal, width=1, stipple='gray25', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Lo-Fi':
+            # ── Lo-Fi: 2am city window, headphones on ──
+            # Rich violet neon. Rain streaks catching city light.
+            # The moon is out. The playlist is 4 hours long. You haven't moved.
+            purp  = '#b060e8'
+            lpurp = '#e080ff'
+            mpurp = '#6030a0'
+            dpurp = '#2a1050'
+            # Purple haze background tint
+            c.create_rectangle(x+2, y+2, x+w-2, y+h-2,
+                fill=dpurp, outline='', stipple='gray25', tags=tag)
+            # Animated rain — each drop has a fixed X and length (seeded),
+            # but its Y position is driven by t so it scrolls downward.
+            # Speed varies per drop so they don't all move in lockstep.
+            # When a drop exits the bottom, it wraps back to the top.
+            # Like the Xenosaga credits except purple and cozier.
+            rng_lo = random.Random(55)   # fixed seed = consistent drop positions
+            panel_h = h - 4
+            for i in range(18):
+                # Fixed properties per drop
+                base_x  = rng_lo.randint(10, w - 10)
+                rlen    = rng_lo.randint(10, 24)
+                speed   = rng_lo.randint(1, 3)       # pixels per tick
+                offset  = rng_lo.randint(0, panel_h) # stagger start positions
+                # Animated Y — wraps around using modulo
+                ry1 = y + 2 + ((t * speed + offset) % panel_h)
+                ry2 = ry1 + rlen
+                rx1 = x + base_x
+                rx2 = rx1 - rlen // 4   # slight diagonal angle
+                # Clip to panel bounds — if streak exits bottom, skip remainder
+                if ry1 > y + h - 2:
+                    continue
+                ry2 = min(ry2, y + h - 2)
+                rx2_clipped = rx1 - (ry2 - ry1) // 4
+                # Brighter streaks for rain close to the "window"
+                col = lpurp if i % 3 == 0 else purp
+                c.create_line(rx1, ry1, rx2_clipped, ry2,
+                    fill=col, width=1, stipple='gray50', tags=tag)
+            # Neon border glow — city light on a wet window
+            c.create_rectangle(x+2, y+2, x+w-2, y+h-2,
+                outline=purp, width=1, fill='', tags=tag)
+            # Moon — full, glowing, always present
+            mcx, mcy, mr = x+w-14, y+13, 9
+            c.create_oval(mcx-mr, mcy-mr, mcx+mr, mcy+mr,
+                fill=dpurp, outline=lpurp, width=1, tags=tag)
+            c.create_oval(mcx-4, mcy-4, mcx+4, mcy+4,
+                fill=lpurp, outline='', stipple='gray50', tags=tag)
+            # Headphone cord — cleaner version
+            for i in range(9):
+                px = x + 5 + i*5
+                py = y+h-6 + int(math.sin(i*1.3)*4)
+                if i < 8:
+                    c.create_line(px, py, px+5,
+                        y+h-6 + int(math.sin((i+1)*1.3)*4),
+                        fill=purp, width=2, tags=tag)
+            # Vinyl record dots bottom-right — lo-fi aesthetic
+            vcx, vcy = x+w-20, y+h-12
+            c.create_oval(vcx-8, vcy-8, vcx+8, vcy+8,
+                outline=purp, fill='', width=1, stipple='gray50', tags=tag)
+            c.create_oval(vcx-3, vcy-3, vcx+3, vcy+3,
+                fill=purp, outline='', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Imperishable Night':
+            # ── Imperishable Night: Eirin's spell card orbits ──
+            # The bullets circle. The moon watches. Time does not pass.
+            silver = '#c0c0ff'
+            pale   = '#e8e8ff'
+            deep   = '#181836'
+            mcx, mcy, mr = x+w-16, y+14, 10
+            c.create_oval(mcx-mr, mcy-mr, mcx+mr, mcy+mr,
+                fill=deep, outline=silver, width=1, tags=tag)
+            c.create_text(mcx, mcy, text=chr(9789),
+                fill=silver, font=('Segoe UI', 10), tags=tag)
+            # Two danmaku rings orbiting opposite directions
+            bcx, bcy = x + w//2, y + h//2
+            for ring_idx, (n_b, radius, spd, col) in enumerate([
+                (8, 22, 0.04,  silver),
+                (5, 12, -0.07, pale),
+            ]):
+                for i in range(n_b):
+                    ang = math.pi * 2 * i / n_b + t * spd
+                    bx2 = bcx + int(radius * math.cos(ang))
+                    by2 = bcy + int(radius * math.sin(ang))
+                    if x+2 < bx2 < x+w-2 and y+2 < by2 < y+h-2:
+                        br = 3 if ring_idx == 0 else 2
+                        c.create_oval(bx2-br, by2-br, bx2+br, by2+br,
+                            outline=col, fill='', width=1, tags=tag)
+            # Bamboo stalks — peaceful contrast
+            for bx in range(x+4, x+36, 8):
+                c.create_line(bx, y+h-2, bx, y+h//2+14,
+                    fill='#303060', width=1, tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Bloodborne':
+            # ── Bloodborne: Yharnam is wrong in a way you can't place ──
+            # Everything looks slightly off. Lines that shouldn't be there.
+            # Blood that pools in the wrong places. A bell ringing far away.
+            # Chaotic. Messy. Like the note the hunter left before they lost it.
+            crim = '#cc3020'
+            dgrn = '#1a2410'
+            ashy = '#d8c8a0'
+            # Cracked/broken background texture — wrong diagonal lines
+            rng_bb = random.Random(t // 8)  # slowly shifting = breathing horror
+            for _ in range(14):
+                lx1 = x + rng_bb.randint(2, w-2)
+                ly1 = y + rng_bb.randint(2, h-2)
+                lx2 = lx1 + rng_bb.randint(-30, 30)
+                ly2 = ly1 + rng_bb.randint(-20, 20)
+                lx2 = max(x+2, min(x+w-2, lx2))
+                ly2 = max(y+2, min(y+h-2, ly2))
+                c.create_line(lx1, ly1, lx2, ly2,
+                    fill=dgrn, width=1, stipple='gray25', tags=tag)
+            # Blood drips from top — irregular, wrong
+            rng_drip = random.Random(19)
+            for _ in range(6):
+                dx = x + rng_drip.randint(20, w-20)
+                dlen = rng_drip.randint(4, 16)
+                # Drip animates downward slowly, different phase per drip
+                doff = rng_drip.randint(0, 60)
+                dy_end = y + 2 + ((t // 3 + doff) % 30)
+                c.create_line(dx, y+2, dx, min(dy_end, y+h-2),
+                    fill=crim, width=rng_drip.randint(1,2), tags=tag)
+                # Drip tip oval
+                if dy_end < y+h-4:
+                    c.create_oval(dx-2, dy_end-2, dx+2, dy_end+2,
+                        fill=crim, outline='', tags=tag)
+            # Candle — bottom right, flickering
+            flame_r = 3 + int(math.sin(t * 0.18) * 2)
+            flame_y = y+h-8 - int(abs(math.sin(t*0.22))*3)
+            c.create_oval(x+w-10-flame_r, flame_y-flame_r,
+                          x+w-10+flame_r, flame_y+flame_r,
+                fill='#e8a020', outline='', tags=tag)
+            c.create_oval(x+w-11, flame_y, x+w-9, y+h-6,
+                fill=ashy, outline='', stipple='gray50', tags=tag)
+            # Wrong text bottom-left — a hunter's note, barely legible
+            c.create_text(x+5, y+h-5, text='fear the old blood',
+                fill=dgrn, font=('Courier New', 5), anchor='sw', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Chrono Trigger':
+            # ── Chrono Trigger: Time Gate ──
+            # The swirling vortex. Blue-white. Warm gold at the edges.
+            # Every gate feels like possibility. Like something important waits.
+            gold = '#e8c040'
+            lgld = '#fff080'
+            sky  = '#90c8f8'
+            # Time gate — concentric rings, rotating slowly
+            gcx, gcy = x+w-16, y+h//2
+            for i, (gr, gcol, gstip) in enumerate([
+                (13, sky,  'gray25'),
+                (10, lgld, 'gray50'),
+                (7,  gold, 'gray75'),
+                (4,  lgld, ''),
+            ]):
+                # Slight rotation per ring using tick
+                rot = (t * (i+1) * 0.02) % (2 * math.pi)
+                # Draw as a series of small arcs approximated by line segments
+                for a in range(0, 360, 20):
+                    a1 = math.radians(a + math.degrees(rot))
+                    a2 = math.radians(a + 15 + math.degrees(rot))
+                    if gstip:
+                        c.create_line(
+                            gcx + int(gr*math.cos(a1)),
+                            gcy + int(gr*math.sin(a1)),
+                            gcx + int(gr*math.cos(a2)),
+                            gcy + int(gr*math.sin(a2)),
+                            fill=gcol, width=1, stipple=gstip, tags=tag)
+                    else:
+                        c.create_oval(gcx-gr, gcy-gr, gcx+gr, gcy+gr,
+                            fill=gcol, outline='', tags=tag)
+                        break
+            # Gold sparkles at fair — twinkling stars
+            rng_ct = random.Random(t // 6)  # sparkle position shifts slowly
+            for _ in range(7):
+                sx = x + 6 + rng_ct.randint(0, w-50)
+                sy = y + 5 + rng_ct.randint(0, h-14)
+                sr = 1 + (t // 10 + rng_ct.randint(0,5)) % 3
+                c.create_oval(sx-sr, sy-sr, sx+sr, sy+sr,
+                    fill=lgld, outline='', tags=tag)
+            # Top and bottom gold rules
+            c.create_line(x+4, y+4, x+w-4, y+4, fill=gold, width=1, tags=tag)
+            c.create_line(x+4, y+h-4, x+w-4, y+h-4, fill=gold, width=1, tags=tag)
+            # Sky blue wash at top — open sky feeling
+            c.create_rectangle(x+2, y+2, x+w-2, y+10,
+                fill=sky, outline='', stipple='gray12', tags=tag)
+
+        elif ACTIVE_THEME_NAME == 'Ultrakill':
+            # ── Ultrakill: V1 descends. The machine does not stop. ──
+            # MANKIND IS DEAD. BLOOD IS FUEL. HELL IS FULL.
+            # Stark. Binary. Red and white on black. No wasted elements.
+            # Like the game itself: fast, brutal, mechanically perfect.
+            red   = '#dd0000'
+            white = '#ffffff'
+            # Thick red bar — health/blood indicator, always present
+            blood_w = int((w - 6) * 0.7)  # 70% "filled"
+            c.create_rectangle(x+2, y+h-8, x+w-2, y+h-2,
+                fill='#1a0000', outline='', tags=tag)
+            c.create_rectangle(x+3, y+h-7, x+3+blood_w, y+h-3,
+                fill=red, outline='', tags=tag)
+            # BLOOD IS FUEL label
+            c.create_text(x+4, y+h-5, text='BLOOD',
+                fill=white, font=('Courier New', 5, 'bold'), anchor='w', tags=tag)
+            # Crosshair — V1's targeting reticle, right side
+            cx2, cy2 = x+w-16, y+h//2
+            cr = 8
+            gap = 3
+            for dx2, dy2, ex2, ey2 in [
+                (cx2-cr, cy2, cx2-gap, cy2),
+                (cx2+gap, cy2, cx2+cr, cy2),
+                (cx2, cy2-cr, cx2, cy2-gap),
+                (cx2, cy2+gap, cx2, cy2+cr),
+            ]:
+                c.create_line(dx2, dy2, ex2, ey2, fill=red, width=1, tags=tag)
+            c.create_oval(cx2-3, cy2-3, cx2+3, cy2+3,
+                outline=red, fill='', width=1, tags=tag)
+            # White muzzle flash — fires every ~30 frames randomly
+            if (t + 7) % 31 < 4:
+                flash_r = 6 + (t % 3)
+                c.create_oval(cx2-flash_r, cy2-flash_r,
+                              cx2+flash_r, cy2+flash_r,
+                    fill=white, outline='', stipple='gray50', tags=tag)
+            # Kill counter — top left, ticking
+            c.create_text(x+4, y+4, text=f'P-{(t//10) % 1000:03d}',
+                fill=red, font=('Courier New', 6, 'bold'), anchor='nw', tags=tag)
+            # Sharp red top bar
+            c.create_rectangle(x+2, y+2, x+w-2, y+4,
+                fill=red, outline='', tags=tag)
+
         # Album art or bouncing ♪ — centred within the art zone with padding
         if self._art_photo:
             art_x = x + ART_PAD + 2
@@ -926,25 +1686,37 @@ class NowPlayingOverlay:
         c.create_line(div_x, y+14, div_x, y+h-14,
                       fill=BORDER_GOLD, width=1, tags=tag)
 
-        # Text
+        # Text — with outlines for Persona themes (stripes make text hard to read)
         if self.song:
             tx = div_x + 10
             title  = self._trunc(self.song.title,  30)
             artist = self._trunc(self.song.artist, 38)
             dur    = self.song.fmt_duration() if self.song.duration > 0 else ''
 
-            c.create_text(tx, y+18, text='NOW PLAYING',
-                fill=TEXT_DIM, font=('Courier New', 8, 'bold'), anchor='w', tags=tag)
-            if dur:
-                c.create_text(x+w-28, y+18, text=dur,
-                    fill=TEXT_DIM, font=('Courier New', 8), anchor='e', tags=tag)
-            c.create_text(tx+1, y+42, text=title,
-                fill=TEXT_WHITE, font=('Segoe UI', 13, 'bold'), anchor='w', tags=tag)
-            c.create_text(tx+1, y+65, text=artist,
-                fill=TEXT_GOLD, font=('Segoe UI', 10), anchor='w', tags=tag)
+            persona_theme = ACTIVE_THEME_NAME in ('Persona 4 Golden', 'Persona 5', 'Persona 3', 'NieR', 'Evangelion', 'Xenoblade 2', 'Windows Aero', 'Lo-Fi', 'Imperishable Night', 'Bloodborne', 'Chrono Trigger', 'Ultrakill')
 
-        # Scanlines + grain — only when texture is enabled
-        if self.show_texture:
+            def _text_outlined(cx, cy, text, fill, font, anchor='w'):
+                """Draw text with a dark outline — essential when bg is busy."""
+                if persona_theme:
+                    for ox, oy in [(-1,-1),(1,-1),(-1,1),(1,1),(0,-1),(0,1),(-1,0),(1,0)]:
+                        c.create_text(cx+ox, cy+oy, text=text,
+                            fill='#000000', font=font, anchor=anchor, tags=tag)
+                c.create_text(cx, cy, text=text, fill=fill,
+                    font=font, anchor=anchor, tags=tag)
+
+            _text_outlined(tx, y+18, 'NOW PLAYING',
+                TEXT_DIM, ('Courier New', 8, 'bold'))
+            if dur:
+                _text_outlined(x+w-28, y+18, dur,
+                    TEXT_DIM, ('Courier New', 8), anchor='e')
+            _text_outlined(tx, y+42, title,
+                TEXT_WHITE, ('Segoe UI', 13, 'bold'))
+            _text_outlined(tx, y+65, artist,
+                TEXT_GOLD, ('Segoe UI', 10))
+
+        # Scanlines + grain — disabled for Persona themes (already very busy)
+        is_persona = ACTIVE_THEME_NAME in ('Persona 4 Golden', 'Persona 5', 'Persona 3', 'NieR', 'Evangelion', 'Xenoblade 2', 'Windows Aero', 'Lo-Fi', 'Imperishable Night', 'Bloodborne', 'Chrono Trigger', 'Ultrakill')
+        if self.show_texture and not is_persona:
             for ly in range(y+2, y+h-2, 3):
                 c.create_line(x+2, ly, x+w-2, ly,
                     fill='#000000', stipple='gray25', tags=tag)
@@ -1019,8 +1791,9 @@ class Player:
         self.on_song_change  = None
         self.on_state_change = None
 
-        self._seek_offset = 0.0   # seconds seeked to on last play(start=)
-        self._pause_pos   = 0.0   # position snapshotted when pausing
+        self._seek_offset   = 0.0   # seconds seeked to on last play(start=)
+        self._pause_pos     = 0.0   # position snapshotted when pausing
+        self.normalize_vol  = False  # volume normalization toggle
 
         if HAS_PYGAME:
             threading.Thread(target=self._pygame_watchdog, daemon=True).start()
@@ -1071,6 +1844,7 @@ class Player:
         self._seek_offset = 0.0
         self.playing = True
         self.paused  = False
+        self._apply_gain()   # apply ReplayGain if normalization is on
         if self.on_song_change:  self.on_song_change(song)
         if self.on_state_change: self.on_state_change(True, False)
 
@@ -1157,8 +1931,27 @@ class Player:
         except: self.q_pos = 0
 
     def set_volume(self, v):
+        self._base_volume = v
         if HAS_PYGAME:
             pygame.mixer.music.set_volume(max(0.0, min(1.0, v)))
+
+    def _apply_gain(self):
+        """Apply ReplayGain adjustment on top of the current base volume.
+        Only active when normalize_vol is True. Clamps to [0, 1].
+        A gain of 0dB means no change. Positive = louder. Negative = quieter.
+        The conversion is: multiplier = 10 ^ (gain_db / 20)
+        This is correct audio math. Trust the math. The math has never lied.
+        (The math lied once in 2019. We don't talk about it.)
+        """
+        if not HAS_PYGAME or not self.normalize_vol:
+            return
+        song = self.current_song()
+        if not song or song.gain_db == 0.0:
+            return
+        base = getattr(self, '_base_volume', 0.8)
+        multiplier = 10 ** (song.gain_db / 20.0)
+        adjusted = max(0.0, min(1.0, base * multiplier))
+        pygame.mixer.music.set_volume(adjusted)
 
     def current_song(self):
         if not self.queue or not self.songs:
@@ -1491,6 +2284,15 @@ class SettingsWindow:
         )
         self._auto_show_var.trace_add('write', self._on_auto_show_toggle)
 
+        self._normalize_var = tk.BooleanVar(value=self.panel.player.normalize_vol)
+        toggle_row(page,
+            'Volume Normalization',
+            'Applies ReplayGain tags to even out loud/quiet songs. '
+            'Requires ReplayGain tags in your files.',
+            self._normalize_var
+        )
+        self._normalize_var.trace_add('write', self._on_normalize_toggle)
+
         self._texture_var = tk.BooleanVar(value=self.overlay.show_texture)
         toggle_row(page,
             'Scanlines & Grain',
@@ -1573,6 +2375,9 @@ class SettingsWindow:
         ).pack(side='left', padx=(4,0))
 
     # ── Callbacks ─────────────────────────────────────────────────────────────
+
+    def _on_normalize_toggle(self, *_):
+        self.panel.player.normalize_vol = bool(self._normalize_var.get())
 
     def _on_auto_show_toggle(self, *_):
         self.overlay.auto_show = bool(self._auto_show_var.get())
@@ -2115,7 +2920,9 @@ class ControlPanel:
         self.root       = root
         self.player     = player
         self.overlay    = overlay
-        self.store      = store
+        self.store           = store
+        self.fav_store       = FavouriteStore(SCRIPT_DIR)
+        self._show_favs_only = False
         self.hk_manager = hk_manager
         self.active_playlist_name = None
         self._seeking       = False
@@ -2141,6 +2948,7 @@ class ControlPanel:
         self.hk_manager.start()   # restart with the new action registered
         # Draw textures once layout is resolved
         root.after(100, self.refresh_textures)
+        root.after(300, self._animate_card_deco)
 
     def _build(self):
         r = self.root
@@ -2163,7 +2971,7 @@ class ControlPanel:
         card_outer = tk.Frame(r, bg=T['bg_deep'])
         card_outer.pack(fill='x', padx=12, pady=(10,4))
 
-        self._card_canvas = tk.Canvas(card_outer, height=90, highlightthickness=0,
+        self._card_canvas = tk.Canvas(card_outer, height=108, highlightthickness=0,
             bg=T['bg_card'])
         self._card_canvas.pack(fill='x')
         self._card_canvas.bind('<Configure>', self._on_card_resize)
@@ -2172,15 +2980,22 @@ class ControlPanel:
         # Frame on top of the canvas
         card = tk.Frame(card_outer, bg=T['bg_card'])
         card.place(relx=0, rely=0, relwidth=1, relheight=1)
-        card.lift()
+        card.tkraise()
 
         # ── Album art thumbnail (left side of card) ──
         CARD_ART = 64
+        # art label — fixed pixel size via image; text labels use char units
+        # We set a minimum pixel width via a blank image trick instead.
+        # Use a fixed pixel-size spacer image to anchor the label dimensions.
+        # If we use width/height in char units with a large font, the label
+        # balloons to 120px+ tall and eats the whole card. Ask me how I know.
+        self._card_art_spacer = tk.PhotoImage(width=64, height=64)  # 1px transparent
         self._card_art_label = tk.Label(card,
-            bg=T['bg_card'], width=CARD_ART, height=CARD_ART,
-            relief='flat', bd=0
+            bg=T['bg_card'], relief='flat', bd=0,
+            image=self._card_art_spacer, compound='center',
+            text='♪', fg=T['text_dim2'], font=('Arial', 22, 'bold')
         )
-        self._card_art_label.pack(side='left', padx=(10, 0), pady=8)
+        self._card_art_label.pack(side='left', padx=(10, 0), pady=4)
         self._card_art_photo = None   # keep reference
 
         # ── Text (right of art) ──
@@ -2190,25 +3005,39 @@ class ControlPanel:
         self.source_var = tk.StringVar(value='')
         tk.Label(text_col, textvariable=self.source_var,
             bg=T['bg_card'], fg=T['text_dim2'], font=('Courier New', 8, 'bold')
-        ).pack(anchor='w', pady=(10,0))
+        ).pack(anchor='w', pady=(6,0))
 
         self.title_var  = tk.StringVar(value='No song loaded')
         self.artist_var = tk.StringVar(value='Open a folder to begin')
         self.dur_var    = tk.StringVar(value='')
 
         tk.Label(text_col, textvariable=self.title_var,
-            bg=T['bg_card'], fg=T['text'], font=('Segoe UI', 12, 'bold'),
-            wraplength=340, justify='left'
+            bg=T['bg_card'], fg=T['text'], font=('Segoe UI', 11, 'bold'),
+            wraplength=0, justify='left'   # no wrap — truncate in _update_now_playing
         ).pack(anchor='w', pady=(2,0))
 
         row = tk.Frame(text_col, bg=T['bg_card'])
-        row.pack(fill='x', pady=(1,8))
+        row.pack(fill='x', pady=(2,6))
         tk.Label(row, textvariable=self.artist_var,
             bg=T['bg_card'], fg=T['accent_hi'], font=('Segoe UI', 10)
         ).pack(side='left')
         tk.Label(row, textvariable=self.dur_var,
             bg=T['bg_card'], fg=T['text_dim2'], font=('Courier New', 9)
         ).pack(side='right')
+
+        # ── Theme deco labels — created LAST so they paint over packed content ──
+        # place() anchors them in card corners. Being last in widget creation
+        # order means tkinter draws them on top of the text_col frame.
+        self._deco_br = tk.Label(card, text='', bg=T['bg_active'],
+            fg=T['accent_hi'], font=('Segoe UI', 18), padx=3, pady=1)
+        self._deco_br.place(relx=1.0, rely=1.0, anchor='se', x=-8, y=-6)
+
+        self._deco_tr = tk.Label(card, text='', bg=T['bg_active'],
+            fg=T['accent_hi'], font=('Courier New', 7, 'bold'), padx=3, pady=1)
+        self._deco_tr.place(relx=1.0, rely=0.0, anchor='ne', x=-8, y=6)
+
+        self._deco_bar = tk.Frame(card, bg=T['bg_card'], height=4)
+        self._deco_bar.place(relx=0, rely=1.0, anchor='sw', relwidth=1.0, y=-4)
 
         # Progress bar
         pf = tk.Frame(r, bg=T['bg_deep'])
@@ -2222,9 +3051,13 @@ class ControlPanel:
         self.prog_slider = tk.Scale(pf, variable=self.prog_var,
             from_=0, to=100, orient='horizontal',
             bg=T['bg_deep'], fg=T['accent'], troughcolor=T['bg_btn'],
-            highlightthickness=0, bd=0, showvalue=False,
-            command=self._on_prog_drag)
+            highlightthickness=0, bd=0, showvalue=False)
+        # No command= here. command= fires on programmatic set() calls from the
+        # poll loop which races with _prog_updating and leaves _seeking=True stuck.
+        # Explicit mouse bindings are reliable.
         self.prog_slider.pack(side='left', fill='x', expand=True, padx=4)
+        self.prog_slider.bind('<Button-1>',       self._on_prog_press)
+        self.prog_slider.bind('<B1-Motion>',      self._on_prog_motion)
         self.prog_slider.bind('<ButtonRelease-1>', self._on_prog_release)
         tk.Label(pf, textvariable=self.len_var,
             bg=T['bg_deep'], fg=T['text_dim'], font=('Courier New', 8), width=5
@@ -2300,6 +3133,12 @@ class ControlPanel:
         tk.Label(ql_hdr, textvariable=self.queue_label_var,
             bg=T['bg_deep'], fg=T['text_dim2'], font=('Courier New', 8, 'bold')
         ).pack(side='left')
+        self._fav_btn = tk.Button(ql_hdr, text='♥',
+            bg=T['bg_deep'], fg=T['text_dim2'],
+            activebackground=T['bg_deep'], activeforeground='#ff6680',
+            relief='flat', bd=0, cursor='hand2', font=('Segoe UI', 10),
+            command=self._toggle_fav_filter)
+        self._fav_btn.pack(side='left', padx=4)
         self.count_var = tk.StringVar(value='')
         tk.Label(ql_hdr, textvariable=self.count_var,
             bg=T['bg_deep'], fg=T['text_dim2'], font=('Courier New', 8)
@@ -2336,6 +3175,9 @@ class ControlPanel:
         self.listbox.bind('<Button-1>',   self._on_drag_start)
         self.listbox.bind('<B1-Motion>',  self._on_drag_motion)
         self.listbox.bind('<ButtonRelease-1>', self._on_drag_release)
+        # Keyboard navigation — arrow keys move, Enter plays, Space pauses
+        self.listbox.bind('<Return>',     self._on_listbox_enter)
+        self.listbox.bind('<space>',      lambda e: self.player.toggle_pause())
         self._drag_idx   = None
         self._drag_ghost = None
 
@@ -2385,30 +3227,221 @@ class ControlPanel:
     # ── Texture helpers ──────────────────────────────────────────────────────
 
     def _draw_hdr_texture(self):
-        """Render noise texture onto the header canvas."""
+        """Render texture onto the header canvas — noise normally, stripes for Persona themes."""
         c = self._hdr_canvas
         c.update_idletasks()
         w = c.winfo_width() or 480
-        img = _make_noise_image(w, 52, T['bg_mid'], grain=10)
-        if img:
-            c.delete('tex')
-            c.create_image(0, 0, image=img, anchor='nw', tags='tex')
-            c.tag_lower('tex')   # keep text on top
-            self._hdr_img = img
-        # Ensure text color matches current theme
+        h = 52
+        c.delete('tex')
+
+        if ACTIVE_THEME_NAME in ('Persona 4 Golden', 'Persona 5', 'Persona 3', 'NieR', 'Evangelion', 'Xenoblade 2', 'Windows Aero', 'Lo-Fi', 'Imperishable Night', 'Bloodborne', 'Chrono Trigger', 'Ultrakill'):
+            # Draw diagonal stripes directly on the canvas
+            self._hdr_img = None
+            self._draw_persona_stripes_on(c, 0, 0, w, h, 'tex')
+        else:
+            img = _make_noise_image(w, h, T['bg_mid'], grain=10)
+            if img:
+                c.create_image(0, 0, image=img, anchor='nw', tags='tex')
+                c.tag_lower('tex')
+                self._hdr_img = img
         c.itemconfig(self._hdr_title_id, fill=T['accent_hi'])
 
     def _draw_card_texture(self):
-        """Render noise texture onto the card canvas."""
+        """Render texture + themed corner decorations onto the card canvas.
+        
+        Each special theme gets a background pattern AND small corner decorations
+        that echo the overlay aesthetic — so the card feels part of the same world.
+        This is purely cosmetic and drawn under the art/text frame.
+        """
         c = self._card_canvas
         c.update_idletasks()
         w = c.winfo_width() or 480
-        h = c.winfo_height() or 80
-        img = _make_noise_image(w, h, T['bg_card'], grain=8)
-        if img:
-            c.delete('tex')
-            c.create_image(0, 0, image=img, anchor='nw', tags='tex')
-            self._card_img = img
+        h = c.winfo_height() or 90
+        c.delete('tex')
+
+        if ACTIVE_THEME_NAME in ('Persona 4 Golden', 'Persona 5', 'Persona 3', 'NieR', 'Evangelion', 'Xenoblade 2', 'Windows Aero', 'Lo-Fi', 'Imperishable Night', 'Bloodborne', 'Chrono Trigger', 'Ultrakill'):
+            self._card_img = None
+            self._draw_persona_stripes_on(c, 0, 0, w, h, 'tex')
+            # Themed corner decorations drawn after the base pattern
+            pass  # accent canvas handled separately by _redraw_card_accents
+        else:
+            img = _make_noise_image(w, h, T['bg_card'], grain=8)
+            if img:
+                c.create_image(0, 0, image=img, anchor='nw', tags='tex')
+                self._card_img = img
+
+    # ── Card decoration animation ─────────────────────────────────────────────
+    _deco_tick = 0
+
+    def _redraw_card_accents(self):
+        self._animate_card_deco()
+
+    def _animate_card_deco(self):
+        """Animate Labels placed inside the card frame. No canvas z-order needed."""
+        if not hasattr(self, '_deco_br'):
+            self.root.after(200, self._animate_card_deco)
+            return
+        ControlPanel._deco_tick = (ControlPanel._deco_tick + 1) % 10000
+        tk_t = ControlPanel._deco_tick
+        bg = T['bg_card']
+
+        # Glyphs use Courier New which has reliable Windows coverage.
+        # Avoid emoji/rare Unicode — Segoe UI may substitute a tofu box.
+        _ph = ['|', '/', '-', '\\']  # spinner chars
+        defs = {
+            'Persona 4 Golden':   (lambda t: ('*' if (t//15)%2==0 else '+', '#f5c518', 'INABA', '#ffe033', '#f5c518')),
+            'Persona 5':          (lambda t: ('>' if (t//10)%2==0 else '>>', '#cc0000', 'PHANTOM', '#ff3333', '#cc0000')),
+            'Persona 3':          (lambda t: (str((t//8)%12 or 12), '#4db8ff', 'DARK HOUR', '#1a6fd4', '#1a6fd4')),
+            'NieR':               (lambda t: (f'{(t*2)%101:03d}%', '#c8b888', 'YoRHa No.2', '#e8d4a0', '#c8b888')),
+            'Evangelion':         (lambda t: ('!!' if (t//10)%2==0 else '! !', '#ff9900', 'NERV' if (t//20)%2==0 else 'MAGI', '#ff9900' if (t//20)%2==0 else '#00cc44', '#ff9900')),
+            'Xenoblade 2':        (lambda t: (['*','+','x','+'][(t//12)%4], '#80f0ff', 'AEGIS', '#00c8d4', '#00c8d4')),
+            'Windows Aero':       (lambda t: ('( )' if (t//14)%2==0 else '(o)', '#44b8a0', 'Aqua', '#80e8d0', '#44b8a0')),
+            'Lo-Fi':              (lambda t: (['.', '..', ':', '::'][(t//8)%4], '#e080ff', 'lo-fi', '#b060e8', '#b060e8')),
+            'Imperishable Night': (lambda t: (['o','O','0','O'][(t//18)%4], '#c0c0ff', 'eternal night', '#7878c8', '#7878c8')),
+            'Bloodborne':         (lambda t: (_ph[(t//8)%4], '#cc3020', 'fear the blood', '#8b1a1a', '#8b1a1a')),
+            'Chrono Trigger':     (lambda t: (['O','o','.','o'][(t//10)%4], '#e8c040', 'TIME GATE', '#fff080', '#e8c040')),
+            'Ultrakill':          (lambda t: ('X' if (t//6)%2==0 else '+', '#dd0000', f'P-{(t*3)%1000:03d}', '#ffffff', '#dd0000')),
+        }
+        if ACTIVE_THEME_NAME in defs:
+            br_txt, br_col, tr_txt, tr_col, bar_col = defs[ACTIVE_THEME_NAME](tk_t)
+            self._deco_br.config(text=br_txt, fg=br_col, bg=T['bg_active'], font=('Courier New', 11, 'bold'))
+            self._deco_tr.config(text=tr_txt, fg=tr_col, bg=T['bg_active'], font=('Courier New', 7, 'bold'))
+            self._deco_bar.config(bg=bar_col)
+        else:
+            self._deco_br.config(text='', bg=T['bg_card'])
+            self._deco_tr.config(text='', bg=T['bg_card'])
+            self._deco_bar.config(bg=bg)
+
+        self.root.after(100, self._animate_card_deco)
+
+
+    def _draw_persona_stripes_on(self, c, x, y, w, h, tag):
+        """Draw themed decorative patterns onto any canvas widget.
+        Each special theme gets its own background treatment.
+        Called for both header and now-playing card canvases.
+        """
+        if ACTIVE_THEME_NAME == 'Persona 4 Golden':
+            stripe_cycle = [(20, '#f5c518'), (6, '#fffbe8'), (28, None)]
+        elif ACTIVE_THEME_NAME == 'Persona 5':
+            stripe_cycle = [(16, '#cc0000'), (40, None)]
+        elif ACTIVE_THEME_NAME == 'Persona 3':
+            stripe_cycle = [(10, '#1a6fd4'), (44, None)]
+        elif ACTIVE_THEME_NAME == 'NieR':
+            # NieR: subtle warm scanlines — like aged paper with faint lines
+            # No diagonal stripes; NieR is minimal and dignified
+            for gy in range(y, y+h, 6):
+                c.create_line(x, gy, x+w, gy,
+                    fill='#c8b888', width=1, stipple='gray12', tags=tag)
+            # Corner bracket accents
+            blen, col = 14, '#c8b888'
+            for bx, by, sx, sy in [(x+1,y+1,1,1),(x+w-1,y+1,-1,1),
+                                    (x+1,y+h-1,1,-1),(x+w-1,y+h-1,-1,-1)]:
+                c.create_line(bx, by, bx+sx*blen, by, fill=col, width=1, tags=tag)
+                c.create_line(bx, by, bx, by+sy*blen, fill=col, width=1, tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Evangelion':
+            # Green phosphor grid with orange accent bar at top
+            c.create_rectangle(x, y, x+w, y+3,
+                fill='#ff9900', outline='', stipple='gray50', tags=tag)
+            for gy in range(y+4, y+h, 10):
+                c.create_line(x, gy, x+w, gy,
+                    fill='#006622', width=1, stipple='gray25', tags=tag)
+            for gx in range(x, x+w, 20):
+                c.create_line(gx, y, gx, y+h,
+                    fill='#006622', width=1, stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Xenoblade 2':
+            # Cloud Sea glow — cyan shimmer at edges, dark teal between
+            c.create_rectangle(x, y, x+w, y+3,
+                fill='#00c8d4', outline='', stipple='gray50', tags=tag)
+            c.create_rectangle(x, y+h-3, x+w, y+h,
+                fill='#00c8d4', outline='', stipple='gray50', tags=tag)
+            # Bioluminescent ripple lines — very faint, like the sea surface
+            for gy in range(y+6, y+h-3, 12):
+                c.create_line(x, gy, x+w, gy,
+                    fill='#052030', width=1, stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Windows Aero':
+            # Fruitigo Aqua — warm white sheen, chrome pinstripes, teal bottom
+            c.create_rectangle(x, y, x+w, y+6,
+                fill='#ffffff', outline='', stipple='gray25', tags=tag)
+            c.create_rectangle(x, y, x+w, y+12,
+                fill='#ffffff', outline='', stipple='gray12', tags=tag)
+            for gy in range(y+14, y+h-4, 3):
+                c.create_line(x, gy, x+w, gy,
+                    fill='#909088', width=1, stipple='gray12', tags=tag)
+            c.create_rectangle(x, y+h-4, x+w, y+h,
+                fill='#44b8a0', outline='', stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Lo-Fi':
+            # Deep violet with neon purple edge bar
+            c.create_rectangle(x, y, x+w, y+3,
+                fill='#b060e8', outline='', tags=tag)
+            for gy in range(y+5, y+h, 8):
+                c.create_line(x, gy, x+w, gy,
+                    fill='#201540', width=1, stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Imperishable Night':
+            rng5 = random.Random(99)
+            for _ in range(18):
+                sx = x + rng5.randint(0, w)
+                sy = y + rng5.randint(0, h)
+                c.create_oval(sx, sy, sx+1, sy+1,
+                    fill='#7878c8', outline='', stipple='gray50', tags=tag)
+            c.create_rectangle(x, y, x+w, y+2,
+                fill='#7878c8', outline='', stipple='gray50', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Bloodborne':
+            # Sickly dark green with arterial red accent — wrong and off-putting
+            c.create_rectangle(x, y, x+w, y+2,
+                fill='#8b1a1a', outline='', tags=tag)
+            c.create_rectangle(x, y+h-2, x+w, y+h,
+                fill='#8b1a1a', outline='', tags=tag)
+            rng_bb2 = random.Random(77)
+            for _ in range(10):
+                lx1 = x + rng_bb2.randint(0, w)
+                c.create_line(lx1, y, lx1 + rng_bb2.randint(-20,20), y+h,
+                    fill='#0e1208', width=1, stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Chrono Trigger':
+            # Sky blue with gold rule — open and optimistic
+            c.create_rectangle(x, y, x+w, y+3,
+                fill='#e8c040', outline='', tags=tag)
+            c.create_rectangle(x, y+h-3, x+w, y+h,
+                fill='#e8c040', outline='', tags=tag)
+            c.create_rectangle(x, y+3, x+w, y+8,
+                fill='#90c8f8', outline='', stipple='gray25', tags=tag)
+            return
+        elif ACTIVE_THEME_NAME == 'Ultrakill':
+            # Pure black with red bars — no noise, no texture, just aggression
+            c.create_rectangle(x, y, x+w, y+3,
+                fill='#dd0000', outline='', tags=tag)
+            c.create_rectangle(x, y+h-3, x+w, y+h,
+                fill='#dd0000', outline='', tags=tag)
+            return
+        else:
+            return
+
+        # Diagonal stripe drawing (Persona themes only reach here)
+        off = x - h
+        while off < x + w:
+            for sw, sc in stripe_cycle:
+                if sc is not None:
+                    ax1 = max(x, off)
+                    ax2 = min(x+w, off + sw)
+                    bx1 = max(x, off + h)
+                    bx2 = min(x+w, off + sw + h)
+                    pts = []
+                    if ax1 < x+w: pts += [ax1, y]
+                    if ax2 > x:   pts += [min(ax2, x+w), y]
+                    if bx2 > x:   pts += [min(bx2, x+w), y+h]
+                    if bx1 < x+w: pts += [max(bx1, x), y+h]
+                    if len(pts) >= 6:
+                        c.create_polygon(pts, fill=sc, outline='',
+                            stipple='gray75', tags=tag)
+                off += sw
+
+
 
     def _on_hdr_resize(self, event):
         self.root.after(50, self._draw_hdr_texture)
@@ -2422,6 +3455,9 @@ class ControlPanel:
         self._card_canvas.configure(bg=T['bg_card'])
         self._draw_hdr_texture()
         self._draw_card_texture()
+        if hasattr(self, '_card_accent'):
+            self._card_accent.configure(bg=T['bg_card'])
+            self.root.after(60, self._redraw_card_accents)
 
     # ── Player bindings ───────────────────────────────────────────────────────
 
@@ -2509,7 +3545,7 @@ class ControlPanel:
     def _show_from_tray(self):
         """Restore window from tray."""
         self.root.deiconify()
-        self.root.lift()
+        self.root.tkraise()
         self.root.focus_force()
 
     # ── Progress bar ──────────────────────────────────────────────────────────
@@ -2547,14 +3583,19 @@ class ControlPanel:
                 self.pos_var.set(song.fmt_pos(pos))
         self.root.after(150, self._poll_progress)   # 150ms is the sweet spot
 
-    def _on_prog_drag(self, _):
-        if self._prog_updating: return
+    def _on_prog_press(self, _):
+        """Mouse pressed on slider — enter seeking mode."""
         self._seeking = True
+
+    def _on_prog_motion(self, _):
+        """Mouse dragging — show position but don't seek yet."""
+        if not self._seeking: return
         song = self.player.current_song()
         if song:
             self.pos_var.set(song.fmt_pos(self.prog_var.get()))
 
     def _on_prog_release(self, _):
+        """Mouse released — seek to chosen position and exit seeking mode."""
         if self._seeking:
             self.player.seek(self.prog_var.get())
             self._seeking = False
@@ -2591,19 +3632,23 @@ class ControlPanel:
         song = self.player.songs[idx]
 
         menu = tk.Menu(self.root, tearoff=0,
-            bg='#1e0d38', fg='#ffcc55',
-            activebackground='#2e1d55', activeforeground='#ffffff',
+            bg=T['bg_btn'], fg=T['accent_hi'],
+            activebackground=T['bg_active'], activeforeground=T['text'],
             font=('Segoe UI', 9)
         )
+        is_fav = self.fav_store.is_fav(song.path)
+        fav_lbl = '♥  Remove from favourites' if is_fav else '♡  Add to favourites'
         menu.add_command(label='▶  Play now',
             command=lambda: self.player.play_by_song_index(idx))
+        menu.add_command(label=fav_lbl,
+            command=lambda p=song.path: self._toggle_fav(p))
         menu.add_separator()
 
         names = self.store.names()
         if names:
             sub = tk.Menu(menu, tearoff=0,
-                bg='#1e0d38', fg='#ffcc55',
-                activebackground='#2e1d55', activeforeground='#ffffff',
+                bg=T['bg_btn'], fg=T['accent_hi'],
+                activebackground=T['bg_active'], activeforeground=T['text'],
                 font=('Segoe UI', 9)
             )
             for name in names:
@@ -2617,6 +3662,29 @@ class ControlPanel:
             menu.tk_popup(event.x_root, event.y_root)
         finally:
             menu.grab_release()
+
+    def _toggle_fav(self, path):
+        now_fav = self.fav_store.toggle(path)
+        msg = '♥ Added to favourites' if now_fav else '♡ Removed from favourites'
+        self.queue_label_var.set(msg)
+        # Refresh list immediately — if in fav filter mode, removed song disappears
+        self._on_queue_search()
+        self.root.after(1500, lambda: self.queue_label_var.set(
+            '♥ FAVOURITES' if self._show_favs_only else
+            f'PLAYLIST — {self.active_playlist_name}' if self.active_playlist_name
+            else 'QUEUE'))
+
+    def _toggle_fav_filter(self):
+        self._show_favs_only = not self._show_favs_only
+        if self._show_favs_only:
+            self._fav_btn.config(fg='#ff6680')
+            self.queue_label_var.set('♥ FAVOURITES')
+        else:
+            self._fav_btn.config(fg=T['text_dim2'])
+            self.queue_label_var.set(
+                f'PLAYLIST — {self.active_playlist_name}'
+                if self.active_playlist_name else 'QUEUE')
+        self._on_queue_search()
 
     def _ctx_add_to_playlist(self, playlist_name, song):
         self.store.add_path(playlist_name, song.path)
@@ -2817,7 +3885,7 @@ class ControlPanel:
                 font=('Segoe UI', 10), anchor='w', padx=14, pady=6
             ).pack(fill='x')
 
-        tk.Frame(win, bg='#1e0d38', height=1).pack(fill='x', pady=(4,0))
+        tk.Frame(win, bg=T['separator'], height=1).pack(fill='x', pady=(4,0))
         tk.Button(win, text='Cancel', command=win.destroy,
             bg='#0d0618', fg='#6655aa',
             activebackground='#1e0d38', activeforeground='#ffffff',
@@ -2857,6 +3925,20 @@ class ControlPanel:
         song = self.player.current_song()
         if song: self.overlay.show(song)
 
+    def _on_listbox_enter(self, _):
+        """Play the selected song when Enter is pressed in the queue."""
+        sel = self.listbox.curselection()
+        if not sel: return
+        label = self.listbox.get(sel[0])
+        q = self.queue_search_var.get().strip() if hasattr(self, 'queue_search_var') else ''
+        if q:
+            for i, s in enumerate(self.player.songs):
+                if s.list_label() == label:
+                    self.player.play_by_song_index(i)
+                    return
+        else:
+            self.player.play_by_song_index(sel[0])
+
     def _on_listbox_double(self, _):
         sel = self.listbox.curselection()
         if not sel: return
@@ -2884,8 +3966,13 @@ class ControlPanel:
         self.root.destroy()
 
     def _update_now_playing(self, song):
-        self.title_var.set(song.title)
+        # Truncate title to prevent it wrapping and pushing artist out of view.
+        # 45 chars at 11pt bold fits comfortably on one line at 480px window width.
+        # If the title is longer, we just add an ellipsis. Aesthetic over completeness.
+        title = song.title if len(song.title) <= 45 else song.title[:44] + '…'
+        self.title_var.set(title)
         self.artist_var.set(song.artist)
+        _discord_update(song.title, song.artist, song.duration)
         self.dur_var.set(song.fmt_duration() if song.duration > 0 else '')
         self.len_var.set(song.fmt_duration() if song.duration > 0 else '0:00')
         self.prog_slider.config(to=max(1, song.duration))
@@ -2906,7 +3993,12 @@ class ControlPanel:
             pass
 
     def _update_card_art(self, song):
-        """Update the album art thumbnail in the now-playing card."""
+        """Update the album art thumbnail in the now-playing card.
+        
+        IMPORTANT: never set width= or height= on this label — those are in
+        character units and will balloon it to 200px+ with a large font.
+        The spacer PhotoImage anchors the pixel size; we just swap what's on top.
+        """
         CARD_ART = 64
         if HAS_PIL and song and song.art_data:
             try:
@@ -2914,28 +4006,36 @@ class ControlPanel:
                 img = img.convert('RGB').resize((CARD_ART, CARD_ART), Image.LANCZOS)
                 photo = ImageTk.PhotoImage(img)
                 self._card_art_photo = photo
-                self._card_art_label.configure(image=photo, width=CARD_ART, height=CARD_ART)
+                # Show album art — no text, image fills the label
+                self._card_art_label.configure(
+                    image=photo, text='', compound='none')
                 return
             except Exception:
                 pass
-        # No art — clear the label fully so previous song's art doesn't linger
+        # No art — show ♪ centered over the spacer image (keeps label at 64x64px)
         self._card_art_photo = None
-        self._card_art_label.configure(image='', text='♪',
-            fg=T['accent_hi'], font=('Arial', 22, 'bold'),
-            width=CARD_ART, height=CARD_ART, bg=T['bg_card'])
+        self._card_art_label.configure(
+            image=self._card_art_spacer, compound='center',
+            text='♪', fg=T['accent_hi'], font=('Arial', 22, 'bold'))
 
     def _update_state(self, playing, paused):
         self.play_btn.config(text='▶' if paused else '⏸')
 
     def _on_queue_search(self, *_):
-        """Filter the visible queue list by the search term. Does not affect playback order."""
+        """Filter queue by search term and/or favourites-only toggle."""
         q = self.queue_search_var.get().lower().strip()
         self.listbox.delete(0, tk.END)
         songs = self.player.songs
+
+        # Apply fav filter first
+        if self._show_favs_only:
+            songs = [s for s in songs if self.fav_store.is_fav(s.path)]
+
         if not q:
             for s in songs:
                 self.listbox.insert(tk.END, s.list_label())
-            self.count_var.set(f'{len(songs)} tracks')
+            label = f'{len(songs)} favourites' if self._show_favs_only else f'{len(songs)} tracks'
+            self.count_var.set(label)
         else:
             matches = [s for s in songs if q in s.title.lower() or q in s.artist.lower()]
             for s in matches:
@@ -2969,6 +4069,7 @@ class ControlPanel:
         s['shuffled'] = self.player.shuffled
         s['corner']   = self.overlay.corner
         s['theme']         = ACTIVE_THEME_NAME
+        s['normalize_vol']   = self.player.normalize_vol
         s['overlay_texture'] = self.overlay.show_texture
         s['overlay_hold_ms'] = self.overlay.hold_ms
         s['overlay_auto_show'] = self.overlay.auto_show
@@ -3008,6 +4109,9 @@ class ControlPanel:
         shuffled = s.get('shuffled', True)
         self.player.shuffled = shuffled
         self.shuf_btn.config(text=f'🔀  Shuffle: {"ON" if shuffled else "OFF"}')
+
+        # Restore volume normalization
+        self.player.normalize_vol = s.get('normalize_vol', False)
 
         # Restore overlay texture + hold duration + auto-show
         self.overlay.show_texture = s.get('overlay_texture', True)
