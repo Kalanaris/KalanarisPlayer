@@ -9,26 +9,19 @@ Run with:
 Output will be in:
     dist/KalanarisPlayer/KalanarisPlayer.exe
 
-Everything the app needs is bundled, no Python installation required
-on the target machine (as long as the Visual C++ redistributable is present,
-which it almost certainly is on any modern Windows install).
-
 Notes:
 - First run installs PyInstaller automatically if it isn't present.
-- The build takes 30–90 seconds.
-- The output folder is about 60–80 MB. Also normal. PyInstaller bundles Python itself.
-- If your antivirus flags the .exe, that's a false positive. PyInstaller exes
-  trip heuristics because they unpack themselves on launch. Add an exclusion.
-  (Yes, this is annoying I LOVE WINDOWS)
+- The build takes 30-90 seconds. Grab a coffee.
+- Output folder is ~80-100 MB. PyInstaller bundles Python itself.
+- Antivirus may flag the .exe, it's a false positive. Add an exclusion.
 """
 
 import subprocess
 import sys
-import os
 from pathlib import Path
 
-HERE = Path(__file__).parent
-SCRIPT = HERE / 'music_overlay.py'
+HERE     = Path(__file__).parent
+SCRIPT   = HERE / 'music_overlay.py'
 APP_NAME = 'KalanarisPlayer'
 
 
@@ -62,26 +55,23 @@ def build():
 
     ensure_pyinstaller()
 
-    # Clean previous build artifacts so we start fresh.
-    # Like resetting to a save point before the final boss.
     dist_dir  = HERE / 'dist'
     build_dir = HERE / 'build'
-    spec_file = HERE / f'{APP_NAME}.spec'
 
     print('\n[INFO] Building...')
 
     cmd = [
         sys.executable, '-m', 'PyInstaller',
-        '--name',         APP_NAME,
-        '--onedir',                      # folder mode — instant startup, zip the folder to share
-        '--windowed',                    # no console window (we're a GUI app)
-        '--noconfirm',                   # overwrite previous dist without asking
-        '--clean',                       # wipe PyInstaller cache before building
-        '--distpath',     str(dist_dir),
-        '--workpath',     str(build_dir),
-        '--specpath',     str(HERE),
+        '--name',     APP_NAME,
+        '--onedir',
+        '--windowed',
+        '--noconfirm',
+        '--clean',
+        '--distpath', str(dist_dir),
+        '--workpath', str(build_dir),
+        '--specpath', str(HERE),
 
-        # Hidden imports that PyInstaller sometimes misses with pygame/mutagen
+        # Core audio/tag libraries
         '--hidden-import', 'pygame',
         '--hidden-import', 'pygame.mixer',
         '--hidden-import', 'mutagen',
@@ -89,13 +79,20 @@ def build():
         '--hidden-import', 'mutagen.mp3',
         '--hidden-import', 'mutagen.flac',
         '--hidden-import', 'mutagen.oggvorbis',
+        '--hidden-import', 'mutagen.oggopus',
+        '--hidden-import', 'mutagen.asf',
+        '--hidden-import', 'mutagen.monkeysaudio',
+        # Image
         '--hidden-import', 'PIL',
         '--hidden-import', 'PIL.Image',
         '--hidden-import', 'PIL.ImageTk',
+        # Hotkeys + tray
         '--hidden-import', 'pynput',
         '--hidden-import', 'pynput.keyboard',
         '--hidden-import', 'pynput.keyboard._win32',
         '--hidden-import', 'pystray',
+        # Discord (optional — silently skipped if not installed)
+        '--hidden-import', 'pypresence',
 
         str(SCRIPT),
     ]
@@ -115,9 +112,8 @@ def build():
         print(f'       Zip up the entire  dist/{APP_NAME}/  folder.')
         print(f'       The .exe only works alongside the other files in that folder.')
         print()
-        print('  Data files (playlists, settings, hotkeys) will be created in:')
-        print(f'       dist/{APP_NAME}/KalanarisPlayer/')
-        print('       (created automatically on first launch)')
+        print('  Data files will be saved next to the exe:')
+        print(f'       settings.json, playlists.json, hotkeys.json, favourites.json')
     else:
         print('  [ERROR] Build appeared to succeed but .exe not found.')
         print(f'          Expected: {exe_path}')
