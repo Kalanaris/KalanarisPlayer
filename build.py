@@ -13,7 +13,7 @@ Notes:
 - First run installs PyInstaller automatically if it isn't present.
 - The build takes 30-90 seconds. Grab a coffee.
 - Output folder is ~80-100 MB. PyInstaller bundles Python itself.
-- Antivirus may flag the .exe, it's a false positive. Add an exclusion.
+- Antivirus may flag the .exe — it's a false positive. Add an exclusion.
 """
 
 import subprocess
@@ -22,6 +22,7 @@ from pathlib import Path
 
 HERE     = Path(__file__).parent
 SCRIPT   = HERE / 'music_overlay.py'
+ICON     = HERE / 'icon.ico'
 APP_NAME = 'KalanarisPlayer'
 
 
@@ -91,11 +92,19 @@ def build():
         '--hidden-import', 'pynput.keyboard',
         '--hidden-import', 'pynput.keyboard._win32',
         '--hidden-import', 'pystray',
-        # Discord (optional — silently skipped if not installed)
+        # Discord Rich Presence (optional — silently skipped if not installed)
         '--hidden-import', 'pypresence',
 
         str(SCRIPT),
     ]
+
+    # Add icon if present
+    if ICON.exists():
+        cmd += ['--icon', str(ICON)]
+        print(f'[INFO] Using icon: {ICON}')
+    else:
+        print('[INFO] icon.ico not found — exe will use default icon.')
+        print('       Place icon.ico next to build.py to use a custom icon.')
 
     run(cmd)
 
